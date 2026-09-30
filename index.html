@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sucata Brasil 🇧🇷 - Conectando Auto Peças e Veículos</title>
+  <title>Sucata Brasil 🇧🇷 - Marketplace Nacional de Autopeças</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Google Fonts: Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
@@ -24,9 +24,11 @@
               yellowDark: '#E0A200',
               green: '#27AE60',
               greenDark: '#1E874B',
-              dark: '#1E1E1E',
-              darkCard: '#2D2D2D',
-              lightBg: '#F4F6F8'
+              dark: '#121212',
+              darkCard: '#1E1E1E',
+              lightBg: '#F4F6F8',
+              blue: '#2563EB',
+              red: '#DC2626'
             }
           },
           fontFamily: {
@@ -45,13 +47,8 @@
     }
 
     /* Hide scrollbars for clean app feel */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* Speech Recording Pulse Effect */
     @keyframes pulse-ring {
@@ -65,21 +62,6 @@
       color: white !important;
     }
 
-    /* Vehicle Integrity Diagram Hotspots */
-    .damage-zone {
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    .damage-zone:hover {
-      opacity: 0.8;
-      transform: scale(1.02);
-    }
-
-    /* Modal Backdrop Transitions */
-    .modal-backdrop {
-      backdrop-filter: blur(4px);
-    }
-    
     /* Custom Loader */
     .loader {
       border: 2px solid #f3f3f3;
@@ -91,12 +73,22 @@
       display: inline-block;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Modal Backdrop Transitions */
+    .modal-backdrop { backdrop-filter: blur(4px); }
+    
+    /* Timeline Status */
+    .status-step { position: relative; padding-left: 24px; padding-bottom: 16px; border-left: 2px solid #E5E7EB; }
+    .status-step:last-child { border-left: 2px solid transparent; }
+    .status-step::before { content: ''; position: absolute; left: -7px; top: 0; width: 12px; height: 12px; border-radius: 50%; background-color: #E5E7EB; border: 2px solid #fff; }
+    .status-step.active::before { background-color: #FFB800; }
+    .status-step.completed::before { background-color: #27AE60; }
   </style>
 </head>
 <body class="flex justify-center items-center min-h-screen p-0 md:p-4 text-slate-800">
 
   <!-- Mobile Frame Simulator Wrapper -->
-  <div class="w-full max-w-md h-screen md:h-[880px] bg-brand-lightBg md:rounded-[36px] shadow-2xl overflow-hidden flex flex-col relative border-0 md:border-8 border-slate-800">
+  <div class="w-full max-w-md h-screen md:h-[900px] bg-brand-lightBg md:rounded-[36px] shadow-2xl overflow-hidden flex flex-col relative border-0 md:border-8 border-slate-800">
 
     <!-- TOP HEADER -->
     <header class="bg-brand-dark text-white px-4 py-3 shrink-0 flex items-center justify-between z-20 shadow-md">
@@ -107,9 +99,9 @@
         <span class="text-xs font-bold tracking-wider text-brand-yellow">BRASIL 🇧🇷</span>
       </div>
 
-      <!-- Access Selector Dropdown -->
+      <!-- Role Switcher (Simulation) -->
       <div class="relative">
-        <select id="role-selector" onchange="switchRole(this.value)" class="bg-slate-800 text-brand-yellow text-xs font-semibold px-3 py-1.5 rounded-full border border-brand-yellow/30 focus:outline-none focus:ring-1 focus:ring-brand-yellow cursor-pointer">
+        <select id="role-selector" onchange="switchRole(this.value)" class="bg-slate-800 text-brand-yellow text-xs font-semibold px-3 py-1.5 rounded-full border border-brand-yellow/30 focus:outline-none cursor-pointer">
           <option value="client">👤 Cliente / Comprador</option>
           <option value="advertiser">🏪 Anunciante (Ferro Velho)</option>
           <option value="admin">🛡️ Administrador</option>
@@ -117,7 +109,7 @@
       </div>
     </header>
 
-    <!-- Alert / Toast Banner Container -->
+    <!-- Toast Notification -->
     <div id="toast-container" class="hidden absolute top-14 left-4 right-4 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-xl border border-brand-yellow flex items-center justify-between transition-all duration-300">
       <div class="flex items-center gap-2">
         <i id="toast-icon" class="fa-solid fa-circle-info text-brand-yellow"></i>
@@ -134,103 +126,67 @@
       <!-- ========================================== -->
       <div id="view-client" class="p-3 space-y-4">
         
-        <!-- Search Bar with Voice Input -->
+        <!-- Search Bar -->
         <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2">
           <i class="fa-solid fa-magnifying-glass text-slate-400 ml-2"></i>
           <input type="text" id="client-search-input" onkeyup="filterListings()" placeholder="Buscar peças, farol, motor, modelo..." class="w-full text-sm focus:outline-none text-slate-700 placeholder-slate-400">
-          
-          <button id="voice-search-btn" onclick="toggleVoiceSearch()" title="Buscar por Voz" class="bg-slate-100 hover:bg-slate-200 text-slate-600 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors">
+          <button id="voice-search-btn" onclick="toggleVoiceSearch()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors">
             <i class="fa-solid fa-microphone"></i>
           </button>
         </div>
 
-        <!-- Vehicle Lines Filter Horizontal Bar -->
-        <div>
-          <div class="flex items-center justify-between mb-2 px-1">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Linha de Veículos</span>
-            <span class="text-[10px] text-brand-green font-medium cursor-pointer" onclick="resetLineFilter()">Ver todas</span>
-          </div>
-          <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            <button onclick="setLineFilter('all')" class="line-btn active bg-brand-yellow text-brand-dark px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-brand-yellow flex items-center gap-1.5">
-              <i class="fa-solid fa-border-all"></i> Todas
-            </button>
-            <button onclick="setLineFilter('passeio')" class="line-btn bg-white text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-car text-blue-500"></i> Passeio
-            </button>
-            <button onclick="setLineFilter('utilitarios')" class="line-btn bg-white text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-van-shuttle text-amber-500"></i> Utilitários
-            </button>
-            <button onclick="setLineFilter('pesados')" class="line-btn bg-white text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-truck-front text-purple-500"></i> Pesados
-            </button>
-            <button onclick="setLineFilter('agricola')" class="line-btn bg-white text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-tractor text-green-600"></i> Agrícola
-            </button>
-            <button onclick="setLineFilter('maritimo')" class="line-btn bg-white text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-ship text-cyan-600"></i> Marítimo
+        <!-- "Ache Para Mim" CTA Banner -->
+        <div class="bg-gradient-to-r from-brand-yellow to-amber-500 rounded-2xl p-4 shadow-md relative overflow-hidden">
+          <div class="relative z-10 flex items-center justify-between">
+            <div>
+              <h3 class="font-extrabold text-brand-dark text-sm">🔍 NÃO ENCONTRO MINHA PEÇA?</h3>
+              <p class="text-[11px] text-brand-dark/80 font-medium mt-0.5">Dispare seu pedido para desmontes em todo o Brasil!</p>
+            </div>
+            <button onclick="openWishModal()" class="bg-brand-dark text-brand-yellow font-bold text-xs px-4 py-2 rounded-xl shadow-lg hover:scale-105 transition-transform">
+              Ache Para Mim
             </button>
           </div>
+          <i class="fa-solid fa-bullhorn absolute -bottom-4 -right-4 text-6xl text-black/10 z-0"></i>
         </div>
 
-        <!-- FIPE API Filter Accordion/Card -->
-        <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-3.5 shadow-md border border-slate-700">
+        <!-- Vehicle Lines Filter -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          <button onclick="setLineFilter('all')" class="line-btn active bg-brand-yellow text-brand-dark px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-brand-yellow">Todas</button>
+          <button onclick="setLineFilter('passeio')" class="line-btn bg-white text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200">Passeio</button>
+          <button onclick="setLineFilter('utilitarios')" class="line-btn bg-white text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200">Utilitários</button>
+          <button onclick="setLineFilter('pesados')" class="line-btn bg-white text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200">Pesados</button>
+        </div>
+
+        <!-- FIPE Filter -->
+        <div class="bg-slate-900 text-white rounded-2xl p-3.5 shadow-md border border-slate-700">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
               <span class="bg-brand-yellow text-brand-dark text-[10px] font-black px-1.5 py-0.5 rounded">FIPE</span>
               <h3 class="text-xs font-bold">Filtrar por Tabela FIPE</h3>
             </div>
-            <button onclick="clearFipeFilter()" class="text-[10px] text-slate-400 hover:text-brand-yellow underline">Limpar FIPE</button>
+            <button onclick="clearFipeFilter()" class="text-[10px] text-slate-400 hover:text-brand-yellow underline">Limpar</button>
           </div>
-
           <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Marca</label>
-              <select id="fipe-brand" onchange="handleFipeBrandChange()" class="w-full bg-slate-800 text-slate-200 text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-brand-yellow">
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Modelo</label>
-              <select id="fipe-model" onchange="handleFipeModelChange()" disabled class="w-full bg-slate-800 text-slate-200 text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-brand-yellow disabled:opacity-50">
-                <option value="">Selecione...</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-[10px] text-slate-400 block mb-1">Ano</label>
-              <select id="fipe-year" onchange="filterListings()" disabled class="w-full bg-slate-800 text-slate-200 text-xs rounded-lg p-2 border border-slate-700 focus:outline-none focus:border-brand-yellow disabled:opacity-50">
-                <option value="">Selecione...</option>
-              </select>
-            </div>
+            <select id="fipe-brand" onchange="handleFipeBrandChange()" class="w-full bg-slate-800 text-slate-200 text-[10px] rounded-lg p-1.5 border border-slate-700 focus:outline-none">
+              <option value="">Marca</option>
+            </select>
+            <select id="fipe-model" onchange="handleFipeModelChange()" disabled class="w-full bg-slate-800 text-slate-200 text-[10px] rounded-lg p-1.5 border border-slate-700 focus:outline-none disabled:opacity-50">
+              <option value="">Modelo</option>
+            </select>
+            <select id="fipe-year" onchange="filterListings()" disabled class="w-full bg-slate-800 text-slate-200 text-[10px] rounded-lg p-1.5 border border-slate-700 focus:outline-none disabled:opacity-50">
+              <option value="">Ano</option>
+            </select>
           </div>
           <div id="fipe-loading-status" class="text-[9px] text-brand-yellow mt-1 text-right hidden"><span class="loader"></span> Consultando FIPE...</div>
         </div>
 
-        <!-- CTA Widget: Didn't Find What You Need? Register Wish -->
-        <div class="bg-amber-50 border border-brand-yellow/50 rounded-2xl p-3 flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-brand-yellow/20 text-brand-dark flex items-center justify-center text-lg shrink-0">
-              <i class="fa-solid fa-bullhorn text-amber-700"></i>
-            </div>
-            <div>
-              <h4 class="text-xs font-bold text-slate-800">Não achou o que precisa?</h4>
-              <p class="text-[11px] text-slate-600">Dispare seu pedido para todos os ferros velhos!</p>
-            </div>
-          </div>
-          <button onclick="openWishModal()" class="bg-brand-yellow hover:bg-brand-yellowDark text-brand-dark text-xs font-bold px-3 py-2 rounded-xl shrink-0 shadow">
-            Cadastrar
-          </button>
-        </div>
-
-        <!-- Feed Heading -->
+        <!-- Listings Feed -->
         <div class="flex items-center justify-between pt-1">
-          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Anúncios Disponíveis (<span id="listings-count">0</span>)</h3>
-          <span class="text-[11px] text-slate-500"><i class="fa-solid fa-location-dot text-red-500"></i> Brasil Inteiro</span>
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Anúncios (<span id="listings-count">0</span>)</h3>
+          <span class="text-[11px] text-slate-500"><i class="fa-solid fa-location-dot text-red-500"></i> Brasil</span>
         </div>
 
-        <!-- Listings List Container -->
-        <div id="listings-container" class="space-y-3">
-          <!-- Dynamic cards inserted by JS -->
-        </div>
+        <div id="listings-container" class="space-y-3"></div>
 
       </div>
 
@@ -239,78 +195,83 @@
       <!-- ========================================== -->
       <div id="view-advertiser" class="hidden p-3 space-y-4">
         
-        <!-- Advertiser Header Banner -->
-        <div class="bg-brand-dark rounded-2xl p-4 text-white shadow-md relative overflow-hidden border border-slate-800">
+        <!-- Advertiser Profile Card -->
+        <div class="bg-brand-dark rounded-2xl p-4 text-white shadow-md border border-slate-800">
           <div class="flex justify-between items-start">
-            <div>
-              <div class="flex items-center gap-1.5">
-                <h2 class="font-black text-base text-brand-yellow">J'STORE AUTO PEÇAS</h2>
-                <i class="fa-solid fa-circle-check text-brand-green text-xs"></i>
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-brand-yellow rounded-full flex items-center justify-center text-brand-dark font-black text-lg">JS</div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h2 class="font-black text-base text-brand-yellow">J'STORE AUTO PEÇAS</h2>
+                  <i class="fa-solid fa-circle-check text-brand-green text-xs"></i>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                  <span><i class="fa-solid fa-star text-brand-yellow"></i> 4.9 (1284)</span>
+                  <span>•</span>
+                  <span>97% respondem em 30min</span>
+                </div>
               </div>
-              <p class="text-[11px] text-slate-400">CDV Credenciado Detran • Gaspar-SC</p>
             </div>
-            <span class="bg-gradient-to-r from-amber-500 to-brand-yellow text-brand-dark text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow">PLANO OURO</span>
+            <span class="bg-gradient-to-r from-amber-500 to-brand-yellow text-brand-dark text-[10px] font-black px-2.5 py-1 rounded-full uppercase">OURO</span>
           </div>
 
-          <!-- KPI Metrics Row -->
+          <!-- KPIs -->
           <div class="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
             <div class="bg-slate-800/80 p-2 rounded-xl">
               <span class="block text-[10px] text-slate-400">Ativos</span>
-              <span id="kpi-active" class="text-base font-extrabold text-brand-yellow">1</span>
+              <span id="kpi-active" class="text-base font-extrabold text-brand-yellow">3</span>
             </div>
             <div class="bg-slate-800/80 p-2 rounded-xl">
-              <span class="block text-[10px] text-slate-400">Pausados</span>
-              <span id="kpi-paused" class="text-base font-extrabold text-amber-500">1</span>
+              <span class="block text-[10px] text-slate-400">Leads</span>
+              <span id="kpi-leads" class="text-base font-extrabold text-brand-green">2</span>
             </div>
             <div class="bg-slate-800/80 p-2 rounded-xl">
-              <span class="block text-[10px] text-slate-400">Congelados</span>
-              <span class="text-base font-extrabold text-slate-400">0</span>
+              <span class="block text-[10px] text-slate-400">Vendas</span>
+              <span class="text-base font-extrabold text-white">45</span>
             </div>
             <div class="bg-slate-800/80 p-2 rounded-xl">
-              <span class="block text-[10px] text-slate-400">Limite</span>
-              <span class="text-base font-extrabold text-brand-green">2/50</span>
+              <span class="block text-[10px] text-slate-400">Saldo Leads</span>
+              <span class="text-base font-extrabold text-amber-400">R$ 50</span>
             </div>
           </div>
         </div>
 
-        <!-- Action Button: Create New Listing -->
-        <button onclick="openCreateListingModal()" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-bold py-3 px-4 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition-transform active:scale-95">
-          <i class="fa-solid fa-circle-plus text-base"></i> CADASTRAR NOVO ANÚNCIO / VEÍCULO
+        <!-- CTA Cadastrar -->
+        <button onclick="openCreateListingModal()" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-bold py-3 rounded-2xl shadow-md flex items-center justify-center gap-2 text-sm transition-transform active:scale-95">
+          <i class="fa-solid fa-circle-plus"></i> CADASTRAR VEÍCULO / PEÇA
         </button>
 
-        <!-- Advertiser Navigation Tabs -->
+        <!-- Navigation Tabs -->
         <div class="flex bg-slate-200 p-1 rounded-xl gap-1">
           <button id="adv-tab-my" onclick="switchAdvTab('my')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm">
-            <i class="fa-solid fa-car"></i> Seus Anúncios
+            <i class="fa-solid fa-car"></i> Estoque
           </button>
-          <button id="adv-tab-wishes" onclick="switchAdvTab('wishes')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 relative">
-            <i class="fa-solid fa-list-check"></i> Pedidos de Clientes
-            <span id="wish-badge" class="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full ml-1">2</span>
+          <button id="adv-tab-leads" onclick="switchAdvTab('leads')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 relative">
+            <i class="fa-solid fa-bullseye"></i> Oportunidades
+            <span id="lead-badge" class="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full ml-1">2</span>
+          </button>
+          <button id="adv-tab-orders" onclick="switchAdvTab('orders')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600">
+            <i class="fa-solid fa-box"></i> Pedidos
           </button>
         </div>
 
-        <!-- TAB CONTENT 1: Advertiser's Own Listings -->
+        <!-- TAB: Estoque -->
         <div id="adv-content-my" class="space-y-3">
-          <div class="flex items-center justify-between px-1">
-            <span class="text-xs font-bold text-slate-600">ANÚNCIO GERENCIADOS</span>
-            <input type="text" placeholder="Filtrar meus anúncios..." onkeyup="filterAdvListings(this.value)" class="text-xs bg-white border rounded-lg px-2 py-1 w-36">
-          </div>
-
-          <div id="adv-listings-container" class="space-y-3">
-            <!-- Dynamic advertiser listings -->
-          </div>
+          <div id="adv-listings-container" class="space-y-3"></div>
         </div>
 
-        <!-- TAB CONTENT 2: Client Wishes Radar -->
-        <div id="adv-content-wishes" class="hidden space-y-3">
+        <!-- TAB: Oportunidades (Leads) -->
+        <div id="adv-content-leads" class="hidden space-y-3">
           <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-800 flex items-start gap-2">
             <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
-            <p>Estes são os pedidos de peças cadastrados por compradores no Brasil. Caso você tenha a peça no estoque, responda diretamente!</p>
+            <p>Compradores estão procurando estas peças. Compre o lead para responder diretamente e fechar negócio!</p>
           </div>
+          <div id="leads-container" class="space-y-3"></div>
+        </div>
 
-          <div id="adv-wishes-container" class="space-y-3">
-            <!-- Dynamic wishes inserted here -->
-          </div>
+        <!-- TAB: Pedidos -->
+        <div id="adv-content-orders" class="hidden space-y-3">
+          <div id="orders-container" class="space-y-3"></div>
         </div>
 
       </div>
@@ -329,40 +290,34 @@
             </div>
             <i class="fa-solid fa-shield-halved text-2xl text-slate-600"></i>
           </div>
-
-          <!-- Global System Metrics -->
           <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-800 text-center">
             <div class="bg-slate-800 p-2 rounded-xl">
-              <span class="block text-[10px] text-slate-400">Anunciantes</span>
-              <span class="text-sm font-bold text-white">128</span>
+              <span class="block text-[10px] text-slate-400">Receita Leads</span>
+              <span class="text-sm font-bold text-brand-yellow">R$ 4.250</span>
             </div>
             <div class="bg-slate-800 p-2 rounded-xl">
-              <span class="block text-[10px] text-slate-400">Total Anúncios</span>
-              <span class="text-sm font-bold text-brand-yellow">1,420</span>
+              <span class="block text-[10px] text-slate-400">Comissões</span>
+              <span class="text-sm font-bold text-brand-green">R$ 1.840</span>
             </div>
             <div class="bg-slate-800 p-2 rounded-xl">
-              <span class="block text-[10px] text-slate-400">Denúncias</span>
-              <span class="text-sm font-bold text-red-400">3</span>
+              <span class="block text-[10px] text-slate-400">Assinaturas</span>
+              <span class="text-sm font-bold text-white">R$ 12.400</span>
             </div>
           </div>
         </div>
 
-        <!-- Admin Management Tabs -->
+        <!-- Admin Moderation -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200">
-          <h3 class="text-xs font-bold text-slate-700 mb-2 uppercase">Pendentes de Aprovação</h3>
-          
-          <div id="admin-pending-container" class="space-y-2">
-            <!-- Pending moderations -->
-          </div>
+          <h3 class="text-xs font-bold text-slate-700 mb-2 uppercase">Aprovações Pendentes</h3>
+          <div id="admin-pending-container" class="space-y-2"></div>
         </div>
 
-        <!-- Advertisers List Management -->
+        <!-- User Management -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200">
           <div class="flex items-center justify-between mb-2">
-            <h3 class="text-xs font-bold text-slate-700 uppercase">Anunciantes Cadastrados</h3>
-            <span class="text-[10px] text-brand-green font-semibold">+ 4 esta semana</span>
+            <h3 class="text-xs font-bold text-slate-700 uppercase">Empresas Cadastradas</h3>
+            <span class="text-[10px] text-brand-green font-semibold">128 ativas</span>
           </div>
-
           <div class="space-y-2 text-xs">
             <div class="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100">
               <div>
@@ -381,11 +336,33 @@
           </div>
         </div>
 
+        <!-- Subscriptions & Plans -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200">
+          <h3 class="text-xs font-bold text-slate-700 mb-2 uppercase">Planos e Assinaturas</h3>
+          <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+            <div class="border border-slate-200 rounded-xl p-2 bg-slate-50">
+              <span class="block font-black text-slate-500">BRONZE</span>
+              <span class="block text-slate-800 font-bold mt-1">R$ 49,90</span>
+              <span class="block text-slate-400 mt-0.5">45 assinantes</span>
+            </div>
+            <div class="border border-slate-200 rounded-xl p-2 bg-slate-50">
+              <span class="block font-black text-slate-500">PRATA</span>
+              <span class="block text-slate-800 font-bold mt-1">R$ 99,90</span>
+              <span class="block text-slate-400 mt-0.5">62 assinantes</span>
+            </div>
+            <div class="border border-brand-yellow rounded-xl p-2 bg-amber-50">
+              <span class="block font-black text-amber-600">OURO</span>
+              <span class="block text-slate-800 font-bold mt-1">R$ 199,90</span>
+              <span class="block text-slate-400 mt-0.5">21 assinantes</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </main>
 
-    <!-- MOBILE BOTTOM NAVIGATION TAB BAR -->
+    <!-- BOTTOM NAVIGATION -->
     <nav class="bg-brand-dark border-t border-slate-800 px-4 py-2 flex justify-around items-center absolute bottom-0 left-0 right-0 z-30">
       <button onclick="switchRole('client')" id="nav-item-client" class="flex flex-col items-center text-brand-yellow">
         <i class="fa-solid fa-magnifying-glass text-base"></i>
@@ -406,54 +383,77 @@
     </nav>
 
     <!-- ========================================== -->
-    <!-- MODALS & POPUPS CONTAINER -->
+    <!-- MODALS CONTAINER -->
     <!-- ========================================== -->
 
-    <!-- MODAL 1: CLIENT WISH / REQUEST CREATION -->
+    <!-- MODAL: CREATE WISH (Client) -->
     <div id="modal-wish" class="hidden fixed inset-0 bg-black/70 modal-backdrop z-50 flex justify-center items-end md:items-center p-0 md:p-4">
-      <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5 space-y-4 animate-slide-up max-h-[90vh] overflow-y-auto">
+      <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b pb-3">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-bullhorn text-brand-yellow text-lg"></i>
-            <h3 class="font-bold text-slate-800 text-sm">Disparar Pedido de Peça</h3>
+            <h3 class="font-bold text-slate-800 text-sm">Ache Para Mim - Pedido Nacional</h3>
           </div>
           <button onclick="closeWishModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
 
         <form id="wish-form" onsubmit="handleWishSubmit(event)" class="space-y-3">
           <div>
-            <label class="text-xs font-semibold text-slate-700 block mb-1">Qual veículo você tem?</label>
-            <input type="text" id="wish-vehicle" required placeholder="Ex: Chevrolet Onix 2016 1.0" class="w-full border rounded-xl p-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-brand-yellow focus:outline-none">
+            <label class="text-xs font-semibold text-slate-700 block mb-1">Veículo (Marca, Modelo, Ano, Motor)</label>
+            <input type="text" id="wish-vehicle" required placeholder="Ex: Chevrolet Onix 2021 1.0" class="w-full border rounded-xl p-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-brand-yellow focus:outline-none">
           </div>
-
           <div>
-            <label class="text-xs font-semibold text-slate-700 block mb-1">Quais peças você está procurando?</label>
-            <textarea id="wish-parts" required rows="3" placeholder="Ex: Lanterna traseira direita, retrovisor elétrico passageiro, difusores de ar..." class="w-full border rounded-xl p-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-brand-yellow focus:outline-none"></textarea>
+            <label class="text-xs font-semibold text-slate-700 block mb-1">Peça Desejada / Código</label>
+            <textarea id="wish-parts" required rows="2" placeholder="Ex: Farol esquerdo, código 52123456..." class="w-full border rounded-xl p-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-brand-yellow focus:outline-none"></textarea>
           </div>
-
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="text-xs font-semibold text-slate-700 block mb-1">Seu Nome</label>
               <input type="text" id="wish-name" required placeholder="Ex: Carlos Silva" class="w-full border rounded-xl p-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-brand-yellow focus:outline-none">
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-1">WhatsApp DDD+Num</label>
+              <label class="text-xs font-semibold text-slate-700 block mb-1">WhatsApp</label>
               <input type="tel" id="wish-phone" required placeholder="Ex: 47999998888" class="w-full border rounded-xl p-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-brand-yellow focus:outline-none">
             </div>
           </div>
-
-          <div class="bg-amber-50 text-amber-800 text-[11px] p-2.5 rounded-xl border border-amber-200">
-            🔔 Este pedido será transmitido para dezenas de ferros velhos cadastrados!
+          <div class="bg-blue-50 text-blue-800 text-[11px] p-2.5 rounded-xl border border-blue-200">
+            🔔 Este pedido será transmitido para os desmontes compatíveis com o seu veículo.
           </div>
-
           <button type="submit" class="w-full bg-brand-yellow hover:bg-brand-yellowDark text-brand-dark font-extrabold py-3 rounded-xl shadow text-xs">
-            ENVIAR DISPARO DE PEDIDO
+            🔎 PROCURAR EM TODO O BRASIL
           </button>
         </form>
       </div>
     </div>
 
-    <!-- MODAL 2: LISTING DETAIL & INTEGRITY DIAGRAM MAP -->
+    <!-- MODAL: BUY LEAD (Advertiser) -->
+    <div id="modal-lead" class="hidden fixed inset-0 bg-black/70 modal-backdrop z-50 flex justify-center items-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-5 space-y-4">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-brand-yellow/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fa-solid fa-bolt text-brand-yellow text-2xl"></i>
+          </div>
+          <h3 class="font-bold text-slate-800 text-sm">Comprar Oportunidade</h3>
+          <p class="text-[11px] text-slate-500 mt-1">Você receberá o contato direto do cliente para enviar sua cotação.</p>
+        </div>
+        
+        <div class="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+          <span class="block text-[10px] text-slate-400 uppercase">Custo do Lead</span>
+          <span class="text-xl font-black text-brand-dark">R$ 5,00</span>
+        </div>
+
+        <div class="space-y-2">
+          <button onclick="confirmLeadPurchase()" class="w-full bg-brand-green text-white font-bold py-3 rounded-xl shadow text-xs">
+            PAGAR E RECEBER CONTATO
+          </button>
+          <button onclick="closeLeadModal()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl text-xs">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: LISTING DETAIL & INTEGRITY MAP -->
     <div id="modal-detail" class="hidden fixed inset-0 bg-black/80 modal-backdrop z-50 flex justify-center items-end md:items-center p-0 md:p-4">
       <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-4 space-y-3 max-h-[92vh] overflow-y-auto">
         
@@ -465,13 +465,11 @@
           <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
 
-        <!-- Listing Photo -->
         <div class="relative rounded-2xl overflow-hidden bg-slate-100 h-48">
-          <img id="detail-img" src="" alt="Veículo" class="w-full h-full object-cover">
+          <img id="detail-img" src="" alt="Veículo" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x300?text=Sem+Foto'">
           <span id="detail-status" class="absolute top-2 right-2 bg-brand-green text-white text-[10px] font-bold px-2 py-0.5 rounded-full">DISPONÍVEL</span>
         </div>
 
-        <!-- Vehicle Info Cards -->
         <div class="grid grid-cols-3 gap-2 text-center text-xs">
           <div class="bg-slate-50 p-2 rounded-xl border">
             <span class="block text-[10px] text-slate-400">MARCA</span>
@@ -487,161 +485,149 @@
           </div>
         </div>
 
-        <!-- Condition Diagram / Collision Map (Interactive Schema) -->
+        <!-- Map of Damage -->
         <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
           <div class="flex justify-between items-center mb-2">
-            <h4 class="text-xs font-bold text-slate-700">Mapa de Avarias / Peças Aproveitáveis</h4>
-            <span class="text-[10px] text-slate-500">Toque na área para ver</span>
+            <h4 class="text-xs font-bold text-slate-700">Mapa de Avarias / Peças</h4>
+            <span class="text-[10px] text-slate-500">Toque na área</span>
           </div>
-
-          <!-- Graphic Diagram Scheme -->
-          <div class="bg-white p-3 rounded-xl border border-slate-200 text-center relative flex justify-center items-center py-4">
+          <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-center py-4">
             <div class="w-48 h-28 border-2 border-slate-300 rounded-3xl relative flex flex-col justify-between p-1 bg-slate-100/50">
-              
-              <!-- Front Area -->
-              <div onclick="showZoneInfo('Frontal', 'Faróis intactos, Capô amassado, Radiador Ok')" class="damage-zone bg-red-400/80 hover:bg-red-500 text-white text-[9px] font-bold p-1 rounded-t-2xl">
-                ⚠️ Frontal Avariada
-              </div>
-              
-              <!-- Middle / Cabin Area -->
+              <div onclick="showZoneInfo('Frontal', 'Faróis intactos, Capô amassado, Radiador Ok')" class="damage-zone bg-red-400/80 text-white text-[9px] font-bold p-1 rounded-t-2xl text-center">⚠️ Frontal</div>
               <div class="flex justify-between my-1 gap-1">
-                <div onclick="showZoneInfo('Lateral Esquerda', 'Portas ok, vidros intactos')" class="damage-zone flex-1 bg-green-500/80 text-white text-[9px] font-bold p-1 rounded">
-                  ✅ L.E.
-                </div>
-                <div class="w-10 bg-slate-200 rounded flex items-center justify-center text-[8px] text-slate-500 font-bold">CABINE</div>
-                <div onclick="showZoneInfo('Lateral Direita', 'Avariada de leve, retrovisor ok')" class="damage-zone flex-1 bg-amber-400/80 text-slate-800 text-[9px] font-bold p-1 rounded">
-                  ⚡ L.D.
-                </div>
+                <div onclick="showZoneInfo('Lateral Esquerda', 'Portas ok, vidros intactos')" class="damage-zone flex-1 bg-green-500/80 text-white text-[9px] font-bold p-1 rounded text-center">✅ L.E.</div>
+                <div class="w-10 bg-slate-200 rounded flex items-center justify-center text-[8px] text-slate-500 font-bold">CAB</div>
+                <div onclick="showZoneInfo('Lateral Direita', 'Avariada de leve, retrovisor ok')" class="damage-zone flex-1 bg-amber-400/80 text-slate-800 text-[9px] font-bold p-1 rounded text-center">⚡ L.D.</div>
               </div>
-
-              <!-- Rear Area -->
-              <div onclick="showZoneInfo('Traseira', 'Lanternas 100%, Para-choque intacto, Tampa porta malas Ok')" class="damage-zone bg-green-500/80 text-white text-[9px] font-bold p-1 rounded-b-2xl">
-                ✅ Traseira Íntegra
-              </div>
-
+              <div onclick="showZoneInfo('Traseira', 'Lanternas 100%, Para-choque intacto')" class="damage-zone bg-green-500/80 text-white text-[9px] font-bold p-1 rounded-b-2xl text-center">✅ Traseira</div>
             </div>
           </div>
-
           <div id="zone-description" class="mt-2 text-[11px] text-slate-600 bg-white p-2 rounded-lg border text-center font-medium">
-            Toque nas zonas do carro acima para inspecionar os detalhes das peças.
+            Toque nas zonas do carro acima para inspecionar.
           </div>
         </div>
 
-        <!-- Advertiser Contact Button -->
+        <!-- Reputation -->
+        <div class="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-brand-green"></i>
+            <span class="font-bold text-slate-700">Vendedor Verificado</span>
+          </div>
+          <div class="flex items-center gap-1 text-brand-yellow">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+            <span class="text-slate-600 font-bold ml-1">4.9</span>
+          </div>
+        </div>
+
         <button onclick="contactWhatsApp()" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-extrabold py-3 rounded-2xl shadow flex items-center justify-center gap-2 text-xs">
-          <i class="fa-brands fa-whatsapp text-base"></i> FALAR COM ANUNCIANTE (WHATSAPP)
+          <i class="fa-brands fa-whatsapp text-base"></i> NEGOCIAR VIA WHATSAPP
         </button>
 
       </div>
     </div>
 
-    <!-- MODAL 3: CREATE NEW LISTING FORM (FOR ADVERTISERS) -->
+    <!-- MODAL: CREATE LISTING (Advertiser) -->
     <div id="modal-create" class="hidden fixed inset-0 bg-black/80 modal-backdrop z-50 flex justify-center items-end md:items-center p-0 md:p-4">
       <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-4 space-y-3 max-h-[92vh] overflow-y-auto">
-        
         <div class="flex justify-between items-center border-b pb-2">
           <h3 class="font-bold text-slate-800 text-sm">Cadastrar Novo Anúncio</h3>
           <button onclick="closeCreateListingModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
 
-        <!-- Toggle: FIPE vs MANUAL -->
         <div class="flex bg-slate-100 p-1 rounded-xl">
-          <button type="button" id="btn-fipe-mode" onclick="switchCreateMode('fipe')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm">
-            <i class="fa-solid fa-magnifying-glass"></i> Buscar na FIPE
-          </button>
-          <button type="button" id="btn-manual-mode" onclick="switchCreateMode('manual')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600">
-            <i class="fa-solid fa-pen"></i> Cadastro Manual
-          </button>
+          <button type="button" id="btn-fipe-mode" onclick="switchCreateMode('fipe')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm">FIPE</button>
+          <button type="button" id="btn-manual-mode" onclick="switchCreateMode('manual')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600">Manual</button>
         </div>
 
         <form id="create-form" onsubmit="handleCreateListingSubmit(event)" class="space-y-3 text-xs">
           
-          <!-- FIPE MODE FIELDS -->
+          <!-- FIPE MODE -->
           <div id="create-fipe-fields" class="space-y-3">
-            <div class="bg-blue-50 text-blue-800 p-2.5 rounded-xl border border-blue-200 text-[11px]">
-              <i class="fa-solid fa-circle-info"></i> Selecione a marca, modelo e ano na tabela FIPE para preencher automaticamente.
-            </div>
-            <div>
-              <label class="font-semibold text-slate-700 block mb-1">Marca (FIPE)</label>
-              <select id="create-fipe-brand" onchange="handleCreateFipeBrandChange()" class="w-full border rounded-xl p-2.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-yellow">
-                <option value="">Carregando marcas...</option>
+            <select id="create-fipe-brand" onchange="handleCreateFipeBrandChange()" class="w-full border rounded-xl p-2.5 bg-white text-slate-800 focus:outline-none">
+              <option value="">Carregando marcas...</option>
+            </select>
+            <div class="grid grid-cols-2 gap-2">
+              <select id="create-fipe-model" onchange="handleCreateFipeModelChange()" disabled class="w-full border rounded-xl p-2.5 bg-white text-slate-800 focus:outline-none disabled:opacity-50">
+                <option value="">Modelo...</option>
+              </select>
+              <select id="create-fipe-year" onchange="handleCreateFipeYearChange()" disabled class="w-full border rounded-xl p-2.5 bg-white text-slate-800 focus:outline-none disabled:opacity-50">
+                <option value="">Ano...</option>
               </select>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="font-semibold text-slate-700 block mb-1">Modelo (FIPE)</label>
-                <select id="create-fipe-model" onchange="handleCreateFipeModelChange()" disabled class="w-full border rounded-xl p-2.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-yellow disabled:opacity-50">
-                  <option value="">Selecione...</option>
-                </select>
-              </div>
-              <div>
-                <label class="font-semibold text-slate-700 block mb-1">Ano (FIPE)</label>
-                <select id="create-fipe-year" onchange="handleCreateFipeYearChange()" disabled class="w-full border rounded-xl p-2.5 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-yellow disabled:opacity-50">
-                  <option value="">Selecione...</option>
-                </select>
-              </div>
-            </div>
-            <div id="create-fipe-loading" class="text-[10px] text-brand-yellow text-right hidden"><span class="loader"></span> Consultando FIPE...</div>
-            <div id="create-fipe-preview" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-[11px] text-slate-600">
-              <i class="fa-solid fa-car text-brand-yellow"></i> <span id="fipe-preview-text"></span>
-            </div>
+            <div id="create-fipe-loading" class="text-[10px] text-brand-yellow text-right hidden"><span class="loader"></span> Consultando...</div>
+            <div id="create-fipe-preview" class="hidden bg-slate-50 border rounded-xl p-2 text-[11px] text-slate-600"></div>
           </div>
 
-          <!-- MANUAL MODE FIELDS -->
+          <!-- MANUAL MODE -->
           <div id="create-manual-fields" class="space-y-3 hidden">
-            <div class="bg-amber-50 text-amber-800 p-2.5 rounded-xl border border-amber-200 text-[11px]">
-              <i class="fa-solid fa-triangle-exclamation"></i> Use esta opção para veículos marítimos, agrícolas ou modelos não encontrados na FIPE.
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="manual-brand" placeholder="Marca" class="w-full border rounded-xl p-2 text-slate-800">
+              <input type="text" id="manual-model" placeholder="Modelo" class="w-full border rounded-xl p-2 text-slate-800">
             </div>
             <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="font-semibold text-slate-700 block mb-1">Marca</label>
-                <input type="text" id="manual-brand" placeholder="Ex: Yamaha" class="w-full border rounded-xl p-2 text-slate-800">
-              </div>
-              <div>
-                <label class="font-semibold text-slate-700 block mb-1">Modelo</label>
-                <input type="text" id="manual-model" placeholder="Ex: Jet Ski VX" class="w-full border rounded-xl p-2 text-slate-800">
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="font-semibold text-slate-700 block mb-1">Ano</label>
-                <input type="text" id="manual-year" placeholder="Ex: 2019" class="w-full border rounded-xl p-2 text-slate-800">
-              </div>
-              <div>
-                <label class="font-semibold text-slate-700 block mb-1">Linha do Veículo</label>
-                <select id="manual-line" class="w-full border rounded-xl p-2 bg-white text-slate-800">
-                  <option value="passeio">Passeio</option>
-                  <option value="utilitarios">Utilitários</option>
-                  <option value="pesados">Pesados</option>
-                  <option value="agricola">Agrícola</option>
-                  <option value="maritimo">Marítimo</option>
-                </select>
-              </div>
+              <input type="text" id="manual-year" placeholder="Ano" class="w-full border rounded-xl p-2 text-slate-800">
+              <select id="manual-line" class="w-full border rounded-xl p-2 bg-white text-slate-800">
+                <option value="passeio">Passeio</option>
+                <option value="utilitarios">Utilitários</option>
+                <option value="pesados">Pesados</option>
+                <option value="agricola">Agrícola</option>
+                <option value="maritimo">Marítimo</option>
+              </select>
             </div>
           </div>
 
-          <!-- COMMON FIELDS -->
+          <!-- COMMON -->
           <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="font-semibold text-slate-700 block mb-1">Localização (Cidade-UF)</label>
-              <input type="text" id="new-location" required placeholder="Ex: Gaspar - SC" class="w-full border rounded-xl p-2 text-slate-800">
-            </div>
-            <div>
-              <label class="font-semibold text-slate-700 block mb-1">URL da Imagem</label>
-              <input type="url" id="new-img" placeholder="https://..." class="w-full border rounded-xl p-2 text-slate-800">
-            </div>
+            <input type="text" id="new-location" required placeholder="Cidade - UF" class="w-full border rounded-xl p-2 text-slate-800">
+            <input type="url" id="new-img" placeholder="URL da Imagem" class="w-full border rounded-xl p-2 text-slate-800">
           </div>
+          <textarea id="new-desc" rows="2" placeholder="Descrição / Peças disponíveis..." class="w-full border rounded-xl p-2 text-slate-800"></textarea>
 
-          <div>
-            <label class="font-semibold text-slate-700 block mb-1">Descrição / Peças disponíveis</label>
-            <textarea id="new-desc" rows="2" placeholder="Ex: Motor funcionando 100k km, caixa ok, portas ok..." class="w-full border rounded-xl p-2 text-slate-800"></textarea>
-          </div>
-
-          <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenDark text-white font-extrabold py-3 rounded-xl shadow">
-            PUBLICAR ANÚNCIO
-          </button>
+          <button type="submit" class="w-full bg-brand-green text-white font-extrabold py-3 rounded-xl shadow">PUBLICAR ANÚNCIO</button>
         </form>
+      </div>
+    </div>
 
+    <!-- MODAL: ORDER TRACKING (Client) -->
+    <div id="modal-order-tracking" class="hidden fixed inset-0 bg-black/80 modal-backdrop z-50 flex justify-center items-end md:items-center p-0 md:p-4">
+      <div class="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center border-b pb-3">
+          <h3 class="font-bold text-slate-800 text-sm">Acompanhar Pedido #<span id="track-order-id"></span></h3>
+          <button onclick="closeOrderTracking()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+          <span class="block text-[10px] text-slate-400 uppercase">Status Atual</span>
+          <span id="track-status-text" class="text-lg font-black text-brand-yellow">PAGAMENTO PENDENTE</span>
+          <span id="track-total" class="block text-xs font-bold text-slate-700 mt-1">R$ 0,00</span>
+        </div>
+
+        <div class="space-y-1">
+          <div class="status-step active" id="step-1">
+            <span class="text-xs font-bold text-slate-800 block">Pedido Criado</span>
+            <span class="text-[10px] text-slate-400">Aguardando pagamento</span>
+          </div>
+          <div class="status-step" id="step-2">
+            <span class="text-xs font-bold text-slate-800 block">Pagamento Aprovado</span>
+            <span class="text-[10px] text-slate-400">Valor retido em custódia</span>
+          </div>
+          <div class="status-step" id="step-3">
+            <span class="text-xs font-bold text-slate-800 block">Em Preparação</span>
+            <span class="text-[10px] text-slate-400">Sucata separando a peça</span>
+          </div>
+          <div class="status-step" id="step-4">
+            <span class="text-xs font-bold text-slate-800 block">Enviado</span>
+            <span class="text-[10px] text-slate-400">Em trânsito para o destino</span>
+          </div>
+          <div class="status-step" id="step-5">
+            <span class="text-xs font-bold text-slate-800 block">Entregue</span>
+            <span class="text-[10px] text-slate-400">Aguardando confirmação do cliente</span>
+          </div>
+        </div>
+
+        <button id="btn-pay-order" onclick="simulatePayment()" class="w-full bg-brand-green text-white font-extrabold py-3 rounded-xl shadow text-xs">
+          💳 SIMULAR PAGAMENTO SEGURO
+        </button>
       </div>
     </div>
 
@@ -649,360 +635,249 @@
 
   <script>
     /* ===================================================================
-       1. APPLICATION DATA STATE & API CONFIG
+       1. GLOBAL STATE MANAGEMENT
        =================================================================== */
     
-    // API FIPE Pública (Parallelum)
     const FIPE_API_BASE = 'https://parallelum.com.br/fipe/api/v1/carros';
 
-    // Initial Marketplace Listings Mock State
-    let listings = [
-      {
-        id: "21392400",
-        brand: "Peugeot",
-        model: "308",
-        year: "2016",
-        line: "passeio",
-        location: "Gaspar - SC",
-        image: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=600&q=80",
-        status: "Ativo",
-        advertiser: "J'Store Auto Peças",
-        desc: "Frente batida. Traseira, laterais e motor em perfeito estado de funcionamento com certidão de baixa."
-      },
-      {
-        id: "21392401",
-        brand: "Chevrolet",
-        model: "Montana",
-        year: "2016",
-        line: "utilitarios",
-        location: "Curitiba - PR",
-        image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&q=80",
-        status: "Pausado",
-        advertiser: "J'Store Auto Peças",
-        desc: "Excelente estado para reaproveitamento de caçamba, portas e vidros."
-      },
-      {
-        id: "21392402",
-        brand: "Volkswagen",
-        model: "Constellation",
-        year: "2016",
-        line: "pesados",
-        location: "Itajaí - SC",
-        image: "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=600&q=80",
-        status: "Ativo",
-        advertiser: "Caminhões & Peças Sul",
-        desc: "Motor MWM operacional, caixa de cambio revisada, módulo ok."
-      },
-      {
-        id: "21392403",
-        brand: "Yamaha",
-        model: "Jet Ski VX 1100",
-        year: "2017",
-        line: "maritimo",
-        location: "Florianópolis - SC",
-        image: "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=600&q=80",
-        status: "Ativo",
-        advertiser: "Marítima Salvados",
-        desc: "Turbina ok, casco com avaria na proa, chicote elétrico perfeito."
-      }
-    ];
-
-    // Client Wishlist Requests Mock Data
-    let clientWishes = [
-      {
-        id: "WISH-101",
-        date: "09/08",
-        vehicle: "IVECO DAILY MAXI FURGONE - 2009",
-        parts: "Retrovisor carona, capa do painel, difusores de ar, maçaneta traseira.",
-        clientName: "Roberto M.",
-        phone: "47999887766",
-        status: "Respondido"
-      },
-      {
-        id: "WISH-102",
-        date: "05/08",
-        vehicle: "CHEVROLET ONIX - 2016",
-        parts: "Lanterna traseira direita original, para-choque traseiro.",
-        clientName: "Ana Paula",
-        phone: "41988776655",
-        status: "Pendente"
-      }
-    ];
-
-    // Current State Variables
-    let currentRole = 'client';
-    let selectedLine = 'all';
-    let selectedListingForDetail = null;
-    let isVoiceSearching = false;
-    let createMode = 'fipe'; // 'fipe' ou 'manual'
-
-    // Cache para não sobrecarregar a API FIPE
-    let fipeBrandsCache = [];
-    let fipeModelsCache = {};
-    let fipeYearsCache = {};
+    // Simulated DB
+    let state = {
+      currentRole: 'client',
+      selectedLine: 'all',
+      selectedListingForDetail: null,
+      createMode: 'fipe',
+      activeOrder: null,
+      fipeBrandsCache: [],
+      leads: [
+        {
+          id: "LEAD-001",
+          date: "Hoje",
+          vehicle: "Hyundai HB20 1.0 2020",
+          part: "Motor completo",
+          clientName: "Carlos Silva",
+          phone: "47999887766",
+          status: "available", // available, purchased, responded
+          price: 5.00
+        },
+        {
+          id: "LEAD-002",
+          date: "Hoje",
+          vehicle: "Toyota Corolla 2018 2.0",
+          part: "Caixa de câmbio automática",
+          clientName: "Ana Paula",
+          phone: "41988776655",
+          status: "available",
+          price: 5.00
+        }
+      ],
+      orders: [
+        {
+          id: "ORD-1001",
+          client: "Roberto M.",
+          item: "Farol Dianteiro Esquerdo",
+          vehicle: "Chevrolet Onix 2021",
+          total: 450.00,
+          status: "pending", // pending, paid, preparing, shipped, delivered
+          advertiser: "J'Store Auto Peças"
+        }
+      ],
+      listings: [
+        {
+          id: "21392400",
+          brand: "Peugeot",
+          model: "308",
+          year: "2016",
+          line: "passeio",
+          location: "Gaspar - SC",
+          image: "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=600&q=80",
+          status: "Ativo",
+          advertiser: "J'Store Auto Peças",
+          desc: "Frente batida. Traseira, laterais e motor em perfeito estado de funcionamento."
+        },
+        {
+          id: "21392401",
+          brand: "Chevrolet",
+          model: "Montana",
+          year: "2016",
+          line: "utilitarios",
+          location: "Curitiba - PR",
+          image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&q=80",
+          status: "Pausado",
+          advertiser: "J'Store Auto Peças",
+          desc: "Excelente estado para reaproveitamento de caçamba, portas e vidros."
+        },
+        {
+          id: "21392402",
+          brand: "Volkswagen",
+          model: "Constellation",
+          year: "2016",
+          line: "pesados",
+          location: "Itajaí - SC",
+          image: "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=600&q=80",
+          status: "Ativo",
+          advertiser: "Caminhões & Peças Sul",
+          desc: "Motor MWM operacional, caixa de cambio revisada, módulo ok."
+        }
+      ]
+    };
 
     /* ===================================================================
-       2. INITIALIZATION & CORE ROLE SWITCHING
+       2. INITIALIZATION
        =================================================================== */
     
     window.onload = function() {
-      // Initialize FIPE Data from API
       loadFipeBrandsFilter();
       loadFipeBrandsCreate();
-      
-      // Render Initial Data
       renderListings();
       renderAdvListings();
-      renderWishes();
+      renderLeads();
+      renderOrders();
       renderAdminPending();
     };
 
     function switchRole(role) {
-      currentRole = role;
+      state.currentRole = role;
       document.getElementById('role-selector').value = role;
 
-      document.getElementById('view-client').classList.add('hidden');
-      document.getElementById('view-advertiser').classList.add('hidden');
-      document.getElementById('view-admin').classList.add('hidden');
-
       ['client', 'advertiser', 'admin'].forEach(r => {
-        const navBtn = document.getElementById(`nav-item-${r}`);
-        if (navBtn) navBtn.className = 'flex flex-col items-center text-slate-400 hover:text-brand-yellow';
+        document.getElementById(`view-${r}`).classList.add('hidden');
+        const nav = document.getElementById(`nav-item-${r}`);
+        if (nav) nav.className = 'flex flex-col items-center text-slate-400 hover:text-brand-yellow';
       });
 
       document.getElementById(`view-${role}`).classList.remove('hidden');
-      const activeNav = document.getElementById(`nav-item-${role}`);
-      if (activeNav) activeNav.className = 'flex flex-col items-center text-brand-yellow';
+      document.getElementById(`nav-item-${role}`).className = 'flex flex-col items-center text-brand-yellow';
 
-      showToast(`Perfil alterado para: ${role === 'client' ? 'Cliente' : role === 'advertiser' ? 'Anunciante' : 'Administrador'}`);
+      showToast(`Visualizando como: ${role === 'client' ? 'Cliente' : role === 'advertiser' ? 'Anunciante' : 'Admin'}`);
     }
 
     /* ===================================================================
-       3. API FIPE REAL INTEGRATION
+       3. FIPE API INTEGRATION
        =================================================================== */
-
-    // Carrega marcas para o filtro do cliente
+    
     async function loadFipeBrandsFilter() {
       const brandSelect = document.getElementById('fipe-brand');
       try {
         const response = await fetch(`${FIPE_API_BASE}/marcas`);
-        if (!response.ok) throw new Error('Falha na API');
         const data = await response.json();
-        fipeBrandsCache = data;
-        
-        brandSelect.innerHTML = '<option value="">Selecione...</option>';
-        data.forEach(brand => {
-          const opt = document.createElement('option');
-          opt.value = brand.nome;
-          opt.textContent = brand.nome;
-          brandSelect.appendChild(opt);
-        });
-      } catch (error) {
-        console.error("Erro FIPE:", error);
-        brandSelect.innerHTML = '<option value="">Erro ao carregar FIPE</option>';
-      }
+        state.fipeBrandsCache = data;
+        brandSelect.innerHTML = '<option value="">Marca</option>';
+        data.forEach(b => brandSelect.innerHTML += `<option value="${b.nome}">${b.nome}</option>`);
+      } catch (e) { brandSelect.innerHTML = '<option value="">Erro FIPE</option>'; }
     }
 
-    // Carrega marcas para o cadastro
     async function loadFipeBrandsCreate() {
       const brandSelect = document.getElementById('create-fipe-brand');
       try {
         const response = await fetch(`${FIPE_API_BASE}/marcas`);
-        if (!response.ok) throw new Error('Falha na API');
         const data = await response.json();
-        
-        brandSelect.innerHTML = '<option value="">Selecione a marca...</option>';
-        data.forEach(brand => {
-          const opt = document.createElement('option');
-          opt.value = brand.codigo;
-          opt.textContent = brand.nome;
-          brandSelect.appendChild(opt);
-        });
-      } catch (error) {
-        brandSelect.innerHTML = '<option value="">Erro ao carregar</option>';
-      }
+        brandSelect.innerHTML = '<option value="">Selecione a Marca</option>';
+        data.forEach(b => brandSelect.innerHTML += `<option value="${b.codigo}">${b.nome}</option>`);
+      } catch (e) { brandSelect.innerHTML = '<option value="">Erro FIPE</option>'; }
     }
 
-    // Filtro do Cliente - Brand Change
     async function handleFipeBrandChange() {
       const brandName = document.getElementById('fipe-brand').value;
       const modelSelect = document.getElementById('fipe-model');
       const yearSelect = document.getElementById('fipe-year');
       const statusDiv = document.getElementById('fipe-loading-status');
 
-      modelSelect.innerHTML = '<option value="">Selecione...</option>';
-      yearSelect.innerHTML = '<option value="">Selecione...</option>';
+      modelSelect.innerHTML = '<option value="">Modelo</option>';
+      yearSelect.innerHTML = '<option value="">Ano</option>';
       yearSelect.disabled = true;
 
-      if (!brandName) {
-        modelSelect.disabled = true;
-        return;
-      }
-
-      const brand = fipeBrandsCache.find(b => b.nome === brandName);
-      if (!brand) return;
-
+      if (!brandName) { modelSelect.disabled = true; return; }
+      const brand = state.fipeBrandsCache.find(b => b.nome === brandName);
+      
       statusDiv.classList.remove('hidden');
       try {
-        const response = await fetch(`${FIPE_API_BASE}/marcas/${brand.codigo}/modelos`);
-        const data = await response.json();
-        
+        const res = await fetch(`${FIPE_API_BASE}/marcas/${brand.codigo}/modelos`);
+        const data = await res.json();
         modelSelect.disabled = false;
-        data.modelos.forEach(model => {
-          const opt = document.createElement('option');
-          opt.value = model.nome;
-          opt.textContent = model.nome;
-          modelSelect.appendChild(opt);
-        });
-      } catch (error) {
-        showToast("Erro ao carregar modelos FIPE.");
-      } finally {
-        statusDiv.classList.add('hidden');
-        filterListings();
-      }
+        data.modelos.forEach(m => modelSelect.innerHTML += `<option value="${m.nome}">${m.nome}</option>`);
+      } catch (e) { showToast("Erro FIPE"); } finally { statusDiv.classList.add('hidden'); filterListings(); }
     }
 
-    // Filtro do Cliente - Model Change
     async function handleFipeModelChange() {
       const brandName = document.getElementById('fipe-brand').value;
       const modelName = document.getElementById('fipe-model').value;
       const yearSelect = document.getElementById('fipe-year');
       const statusDiv = document.getElementById('fipe-loading-status');
 
-      yearSelect.innerHTML = '<option value="">Selecione...</option>';
-
-      if (!brandName || !modelName) {
-        yearSelect.disabled = true;
-        return;
-      }
-
-      const brand = fipeBrandsCache.find(b => b.nome === brandName);
-      if (!brand) return;
-
+      yearSelect.innerHTML = '<option value="">Ano</option>';
+      if (!brandName || !modelName) { yearSelect.disabled = true; return; }
+      
+      const brand = state.fipeBrandsCache.find(b => b.nome === brandName);
       statusDiv.classList.remove('hidden');
       try {
-        const response = await fetch(`${FIPE_API_BASE}/marcas/${brand.codigo}/modelos`);
-        const data = await response.json();
+        const res = await fetch(`${FIPE_API_BASE}/marcas/${brand.codigo}/modelos`);
+        const data = await res.json();
         const model = data.modelos.find(m => m.nome === modelName);
-        
         if (model) {
-          const yearResponse = await fetch(`${FIPE_API_BASE}/marcas/${brand.codigo}/modelos/${model.codigo}/anos`);
-          const yearData = await yearResponse.json();
-          
+          const yearRes = await fetch(`${FIPE_API_BASE}/marcas/${brand.codigo}/modelos/${model.codigo}/anos`);
+          const yearData = await yearRes.json();
           yearSelect.disabled = false;
-          yearData.forEach(year => {
-            const opt = document.createElement('option');
-            opt.value = year.nome.split(' ')[0]; // Pega apenas o ano (ex: "2016")
-            opt.textContent = year.nome;
-            yearSelect.appendChild(opt);
-          });
+          yearData.forEach(y => yearSelect.innerHTML += `<option value="${y.nome.split(' ')[0]}">${y.nome}</option>`);
         }
-      } catch (error) {
-        showToast("Erro ao carregar anos FIPE.");
-      } finally {
-        statusDiv.classList.add('hidden');
-        filterListings();
-      }
+      } catch (e) { showToast("Erro FIPE"); } finally { statusDiv.classList.add('hidden'); filterListings(); }
     }
 
-    // Criação - Brand Change
     async function handleCreateFipeBrandChange() {
       const brandCode = document.getElementById('create-fipe-brand').value;
       const modelSelect = document.getElementById('create-fipe-model');
       const yearSelect = document.getElementById('create-fipe-year');
       const loading = document.getElementById('create-fipe-loading');
 
-      modelSelect.innerHTML = '<option value="">Selecione...</option>';
-      yearSelect.innerHTML = '<option value="">Selecione...</option>';
+      modelSelect.innerHTML = '<option value="">Modelo</option>';
+      yearSelect.innerHTML = '<option value="">Ano</option>';
       yearSelect.disabled = true;
       document.getElementById('create-fipe-preview').classList.add('hidden');
 
-      if (!brandCode) {
-        modelSelect.disabled = true;
-        return;
-      }
-
+      if (!brandCode) { modelSelect.disabled = true; return; }
       loading.classList.remove('hidden');
       try {
-        const response = await fetch(`${FIPE_API_BASE}/marcas/${brandCode}/modelos`);
-        const data = await response.json();
-        
+        const res = await fetch(`${FIPE_API_BASE}/marcas/${brandCode}/modelos`);
+        const data = await res.json();
         modelSelect.disabled = false;
-        data.modelos.forEach(model => {
-          const opt = document.createElement('option');
-          opt.value = model.codigo;
-          opt.textContent = model.nome;
-          modelSelect.appendChild(opt);
-        });
-      } catch (error) {
-        showToast("Erro ao carregar modelos.");
-      } finally {
-        loading.classList.add('hidden');
-      }
+        data.modelos.forEach(m => modelSelect.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`);
+      } catch (e) { showToast("Erro"); } finally { loading.classList.add('hidden'); }
     }
 
-    // Criação - Model Change
     async function handleCreateFipeModelChange() {
       const brandCode = document.getElementById('create-fipe-brand').value;
       const modelCode = document.getElementById('create-fipe-model').value;
       const yearSelect = document.getElementById('create-fipe-year');
       const loading = document.getElementById('create-fipe-loading');
 
-      yearSelect.innerHTML = '<option value="">Selecione...</option>';
+      yearSelect.innerHTML = '<option value="">Ano</option>';
       document.getElementById('create-fipe-preview').classList.add('hidden');
 
-      if (!brandCode || !modelCode) {
-        yearSelect.disabled = true;
-        return;
-      }
-
+      if (!brandCode || !modelCode) { yearSelect.disabled = true; return; }
       loading.classList.remove('hidden');
       try {
-        const response = await fetch(`${FIPE_API_BASE}/marcas/${brandCode}/modelos/${modelCode}/anos`);
-        const data = await response.json();
-        
+        const res = await fetch(`${FIPE_API_BASE}/marcas/${brandCode}/modelos/${modelCode}/anos`);
+        const data = await res.json();
         yearSelect.disabled = false;
-        data.forEach(year => {
-          const opt = document.createElement('option');
-          opt.value = year.codigo;
-          opt.textContent = year.nome;
-          yearSelect.appendChild(opt);
-        });
-      } catch (error) {
-        showToast("Erro ao carregar anos.");
-      } finally {
-        loading.classList.add('hidden');
-      }
+        data.forEach(y => yearSelect.innerHTML += `<option value="${y.codigo}">${y.nome}</option>`);
+      } catch (e) { showToast("Erro"); } finally { loading.classList.add('hidden'); }
     }
 
-    // Criação - Year Change (Preenche Preview)
     async function handleCreateFipeYearChange() {
       const brandCode = document.getElementById('create-fipe-brand').value;
       const modelCode = document.getElementById('create-fipe-model').value;
       const yearCode = document.getElementById('create-fipe-year').value;
       const preview = document.getElementById('create-fipe-preview');
-      const previewText = document.getElementById('fipe-preview-text');
 
-      if (!brandCode || !modelCode || !yearCode) {
-        preview.classList.add('hidden');
-        return;
-      }
-
+      if (!brandCode || !modelCode || !yearCode) { preview.classList.add('hidden'); return; }
       try {
-        const response = await fetch(`${FIPE_API_BASE}/marcas/${brandCode}/modelos/${modelCode}/anos/${yearCode}`);
-        const data = await response.json();
-        
+        const res = await fetch(`${FIPE_API_BASE}/marcas/${brandCode}/modelos/${modelCode}/anos/${yearCode}`);
+        const data = await res.json();
         preview.classList.remove('hidden');
-        previewText.innerHTML = `<b>${data.Marca} ${data.Modelo}</b> - Ano ${data.AnoModelo} - Combustível: ${data.Combustivel} - Valor FIPE: <b>${data.Valor}</b>`;
-        
-        // Armazena temporariamente no dataset para usar no submit
+        preview.innerHTML = `<b>${data.Marca} ${data.Modelo}</b> - Ano ${data.AnoModelo} - Valor FIPE: <b>${data.Valor}</b>`;
         preview.dataset.fipeBrand = data.Marca;
         preview.dataset.fipeModel = data.Modelo;
         preview.dataset.fipeYear = data.AnoModelo;
-        
-      } catch (error) {
-        preview.classList.add('hidden');
-      }
+      } catch (e) { preview.classList.add('hidden'); }
     }
 
     function clearFipeFilter() {
@@ -1015,24 +890,17 @@
     }
 
     /* ===================================================================
-       4. CLIENT FEED FILTERING & RENDERING
+       4. CLIENT FEED
        =================================================================== */
-
+    
     function setLineFilter(line) {
-      selectedLine = line;
-      document.querySelectorAll('.line-btn').forEach(btn => {
-        btn.classList.remove('bg-brand-yellow', 'text-brand-dark', 'active');
-        btn.classList.add('bg-white', 'text-slate-700');
-      });
-      event.currentTarget.classList.remove('bg-white', 'text-slate-700');
-      event.currentTarget.classList.add('bg-brand-yellow', 'text-brand-dark', 'active');
+      state.selectedLine = line;
+      document.querySelectorAll('.line-btn').forEach(btn => btn.className = 'line-btn bg-white text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-slate-200');
+      event.target.className = 'line-btn active bg-brand-yellow text-brand-dark px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm border border-brand-yellow';
       filterListings();
     }
 
-    function resetLineFilter() {
-      selectedLine = 'all';
-      filterListings();
-    }
+    function resetLineFilter() { state.selectedLine = 'all'; filterListings(); }
 
     function filterListings() {
       const query = document.getElementById('client-search-input').value.toLowerCase();
@@ -1040,54 +908,41 @@
       const fipeModel = document.getElementById('fipe-model').value;
       const fipeYear = document.getElementById('fipe-year').value;
 
-      const filtered = listings.filter(item => {
-        if (selectedLine !== 'all' && item.line !== selectedLine) return false;
+      const filtered = state.listings.filter(item => {
+        if (state.selectedLine !== 'all' && item.line !== state.selectedLine) return false;
         if (fipeBrand && item.brand.toLowerCase() !== fipeBrand.toLowerCase()) return false;
         if (fipeModel && item.model.toLowerCase() !== fipeModel.toLowerCase()) return false;
         if (fipeYear && item.year !== fipeYear) return false;
-
-        if (query) {
-          const fullText = `${item.brand} ${item.model} ${item.year} ${item.desc} ${item.location}`.toLowerCase();
-          if (!fullText.includes(query)) return false;
-        }
+        if (query && !`${item.brand} ${item.model} ${item.year} ${item.desc}`.toLowerCase().includes(query)) return false;
         return true;
       });
-
       renderListings(filtered);
     }
 
-    function renderListings(itemsToRender = listings) {
+    function renderListings(items = state.listings) {
       const container = document.getElementById('listings-container');
-      document.getElementById('listings-count').textContent = itemsToRender.length;
-
-      if (itemsToRender.length === 0) {
-        container.innerHTML = `
-          <div class="bg-white rounded-2xl p-6 text-center text-slate-500 border border-slate-200">
-            <i class="fa-solid fa-car-burst text-3xl text-slate-300 mb-2"></i>
-            <p class="text-xs font-bold">Nenhum veículo ou peça encontrado.</p>
-            <p class="text-[11px] mt-1 text-slate-400">Tente ajustar os filtros FIPE ou buscar outro termo.</p>
-          </div>
-        `;
+      document.getElementById('listings-count').textContent = items.length;
+      
+      if (items.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-slate-500 border border-slate-200"><i class="fa-solid fa-car-burst text-3xl text-slate-300 mb-2"></i><p class="text-xs font-bold">Nenhum resultado.</p></div>`;
         return;
       }
 
-      container.innerHTML = itemsToRender.map(item => `
+      container.innerHTML = items.map(item => `
         <div onclick="openDetailModal('${item.id}')" class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex gap-3 cursor-pointer hover:border-brand-yellow transition-all">
-          <img src="${item.image}" alt="${item.model}" class="w-24 h-24 rounded-xl object-cover shrink-0 bg-slate-100" onerror="this.src='https://placehold.co/100x100?text=Sem+Foto'">
+          <img src="${item.image}" class="w-24 h-24 rounded-xl object-cover shrink-0 bg-slate-100" onerror="this.src='https://placehold.co/100x100?text=Sem+Foto'">
           <div class="flex-1 flex flex-col justify-between">
             <div>
               <div class="flex justify-between items-start">
                 <span class="text-[10px] font-bold text-slate-400 uppercase">${item.brand}</span>
                 <span class="bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.5 rounded">${item.year}</span>
               </div>
-              <h4 class="font-bold text-slate-800 text-sm leading-tight">${item.model}</h4>
+              <h4 class="font-bold text-slate-800 text-sm">${item.model}</h4>
               <p class="text-[11px] text-slate-500 line-clamp-2 mt-1">${item.desc}</p>
             </div>
             <div class="flex items-center justify-between mt-2 pt-1 border-t border-slate-100">
               <span class="text-[10px] text-slate-500"><i class="fa-solid fa-location-dot text-red-500"></i> ${item.location}</span>
-              <span class="text-[11px] font-extrabold text-brand-green flex items-center gap-1">
-                <i class="fa-brands fa-whatsapp"></i> Ver Peças
-              </span>
+              <span class="text-[11px] font-extrabold text-brand-green"><i class="fa-brands fa-whatsapp"></i> Ver Peças</span>
             </div>
           </div>
         </div>
@@ -1095,332 +950,332 @@
     }
 
     /* ===================================================================
-       5. VOICE SEARCH SIMULATOR
+       5. ADVERTISER DASHBOARD
        =================================================================== */
     
-    function toggleVoiceSearch() {
-      const btn = document.getElementById('voice-search-btn');
-      const input = document.getElementById('client-search-input');
-
-      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        showToast("Simulando reconhecimento de voz...");
-        btn.classList.add('recording-active');
-        setTimeout(() => {
-          input.value = "Peugeot 308";
-          filterListings();
-          btn.classList.remove('recording-active');
-          showToast("Voz reconhecida: 'Peugeot 308'");
-        }, 2000);
-        return;
-      }
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'pt-BR';
-
-      if (!isVoiceSearching) {
-        isVoiceSearching = true;
-        btn.classList.add('recording-active');
-        showToast("Fale o nome da peça ou veículo...");
-        recognition.start();
-
-        recognition.onresult = function(event) {
-          const transcript = event.results[0][0].transcript;
-          input.value = transcript;
-          filterListings();
-          showToast(`Busca por voz: "${transcript}"`);
-        };
-
-        recognition.onerror = function() { showToast("Erro ao reconhecer voz."); };
-        recognition.onend = function() {
-          isVoiceSearching = false;
-          btn.classList.remove('recording-active');
-        };
-      }
-    }
-
-    /* ===================================================================
-       6. ADVERTISER MANAGEMENT
-       =================================================================== */
-
     function switchAdvTab(tab) {
-      if (tab === 'my') {
-        document.getElementById('adv-content-my').classList.remove('hidden');
-        document.getElementById('adv-content-wishes').classList.add('hidden');
-        document.getElementById('adv-tab-my').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm';
-        document.getElementById('adv-tab-wishes').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 relative';
-      } else {
-        document.getElementById('adv-content-my').classList.add('hidden');
-        document.getElementById('adv-content-wishes').classList.remove('hidden');
-        document.getElementById('adv-tab-my').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600';
-        document.getElementById('adv-tab-wishes').className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm relative';
-      }
+      ['my', 'leads', 'orders'].forEach(t => {
+        document.getElementById(`adv-content-${t}`).classList.add('hidden');
+        document.getElementById(`adv-tab-${t}`).className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 relative';
+      });
+      document.getElementById(`adv-content-${tab}`).classList.remove('hidden');
+      document.getElementById(`adv-tab-${tab}`).className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm relative';
     }
 
-    function renderAdvListings(filteredListings = null) {
+    function renderAdvListings() {
       const container = document.getElementById('adv-listings-container');
-      const items = filteredListings || listings.filter(i => i.advertiser === "J'Store Auto Peças");
-
+      const items = state.listings.filter(i => i.advertiser === "J'Store Auto Peças");
+      
       container.innerHTML = items.map(item => `
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2">
           <div class="flex gap-3">
             <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover bg-slate-100" onerror="this.src='https://placehold.co/100x100?text=Sem+Foto'">
             <div class="flex-1">
               <div class="flex justify-between items-start">
-                <h4 class="font-bold text-xs text-slate-800">${item.brand} - ${item.model} (${item.year})</h4>
+                <h4 class="font-bold text-xs text-slate-800">${item.brand} ${item.model} (${item.year})</h4>
                 <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${item.status === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${item.status}</span>
               </div>
-              <span class="text-[10px] text-slate-400 font-mono">ID #${item.id}</span>
-              <p class="text-[11px] text-slate-500 line-clamp-1">${item.desc}</p>
+              <p class="text-[11px] text-slate-500 line-clamp-1 mt-1">${item.desc}</p>
             </div>
           </div>
-
           <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <button onclick="toggleListingStatus('${item.id}')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-lg">
-              <i class="fa-solid ${item.status === 'Ativo' ? 'fa-pause' : 'fa-play'}"></i> ${item.status === 'Ativo' ? 'Pausar' : 'Ativar'}
-            </button>
-            <button onclick="deleteListing('${item.id}')" class="text-[11px] bg-red-50 hover:bg-red-100 text-red-600 font-bold px-2.5 py-1 rounded-lg">
-              <i class="fa-solid fa-trash"></i> Excluir
-            </button>
+            <button onclick="toggleListingStatus('${item.id}')" class="text-[11px] bg-slate-100 font-bold px-2.5 py-1 rounded-lg"><i class="fa-solid ${item.status === 'Ativo' ? 'fa-pause' : 'fa-play'}"></i> ${item.status === 'Ativo' ? 'Pausar' : 'Ativar'}</button>
+            <button onclick="deleteListing('${item.id}')" class="text-[11px] bg-red-50 text-red-600 font-bold px-2.5 py-1 rounded-lg"><i class="fa-solid fa-trash"></i> Excluir</button>
           </div>
         </div>
       `).join('');
 
-      const activeCount = listings.filter(i => i.advertiser === "J'Store Auto Peças" && i.status === 'Ativo').length;
-      const pausedCount = listings.filter(i => i.advertiser === "J'Store Auto Peças" && i.status === 'Pausado').length;
-      document.getElementById('kpi-active').textContent = activeCount;
-      document.getElementById('kpi-paused').textContent = pausedCount;
+      document.getElementById('kpi-active').textContent = items.filter(i => i.status === 'Ativo').length;
     }
 
-    function renderWishes() {
-      const container = document.getElementById('adv-wishes-container');
-      container.innerHTML = clientWishes.map(wish => `
+    function renderLeads() {
+      const container = document.getElementById('leads-container');
+      const availableLeads = state.leads.filter(l => l.status === 'available');
+      
+      document.getElementById('kpi-leads').textContent = availableLeads.length;
+      document.getElementById('lead-badge').textContent = availableLeads.length;
+
+      if (availableLeads.length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-slate-500 border border-slate-200"><p class="text-xs font-bold">Nenhuma oportunidade no momento.</p></div>`;
+        return;
+      }
+
+      container.innerHTML = availableLeads.map(lead => `
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2">
           <div class="flex justify-between items-start">
             <div>
-              <span class="text-[10px] font-bold text-brand-green bg-green-50 px-2 py-0.5 rounded-full">${wish.date}</span>
-              <h4 class="font-bold text-xs text-slate-800 mt-1">${wish.vehicle}</h4>
+              <span class="text-[10px] font-bold text-brand-green bg-green-50 px-2 py-0.5 rounded-full">${lead.date}</span>
+              <h4 class="font-bold text-xs text-slate-800 mt-1">${lead.vehicle}</h4>
+              <p class="text-[11px] text-slate-600 font-medium mt-1">Peça: <b>${lead.part}</b></p>
             </div>
-            <span class="text-[10px] font-bold ${wish.status === 'Respondido' ? 'text-blue-600' : 'text-amber-600'}">${wish.status}</span>
           </div>
-          <p class="text-xs text-slate-600 bg-slate-50 p-2 rounded-xl font-medium">"${wish.parts}"</p>
-          <div class="flex justify-between items-center pt-1 text-[11px]">
-            <span class="text-slate-400">Cliente: ${wish.clientName}</span>
-            <button onclick="respondWish('${wish.phone}', '${wish.vehicle}')" class="bg-brand-green text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow">
-              <i class="fa-brands fa-whatsapp"></i> Responder Peça
+          <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+            <span class="text-[11px] font-bold text-slate-800">R$ ${lead.price.toFixed(2)}</span>
+            <button onclick="openLeadModal('${lead.id}')" class="bg-brand-yellow hover:bg-brand-yellowDark text-brand-dark font-bold px-3 py-1.5 rounded-xl text-[11px] shadow">
+              <i class="fa-solid fa-bolt"></i> Comprar Oportunidade
             </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderOrders() {
+      const container = document.getElementById('orders-container');
+      container.innerHTML = state.orders.map(order => `
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[10px] font-mono text-slate-400">#${order.id}</span>
+              <h4 class="font-bold text-xs text-slate-800">${order.item}</h4>
+              <p class="text-[10px] text-slate-500">Cliente: ${order.client} • ${order.vehicle}</p>
+            </div>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${order.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}">${order.status.toUpperCase()}</span>
+          </div>
+          <div class="flex justify-between items-center pt-1 text-xs">
+            <span class="font-bold text-slate-800">R$ ${order.total.toFixed(2)}</span>
+            <button onclick="alert('Detalhes do pedido ${order.id}')" class="text-[11px] text-brand-blue font-bold">Ver Detalhes</button>
           </div>
         </div>
       `).join('');
     }
 
     function toggleListingStatus(id) {
-      const listing = listings.find(i => i.id === id);
-      if (listing) {
-        listing.status = listing.status === 'Ativo' ? 'Pausado' : 'Ativo';
-        renderAdvListings();
-        renderListings();
-        showToast(`Anúncio #${id} alterado para ${listing.status}`);
+      const item = state.listings.find(i => i.id === id);
+      if (item) {
+        item.status = item.status === 'Ativo' ? 'Pausado' : 'Ativo';
+        renderAdvListings(); renderListings();
       }
     }
 
     function deleteListing(id) {
-      listings = listings.filter(i => i.id !== id);
-      renderAdvListings();
-      renderListings();
-      showToast(`Anúncio #${id} removido.`);
-    }
-
-    function filterAdvListings(query) {
-      const filtered = listings.filter(i => 
-        i.advertiser === "J'Store Auto Peças" && 
-        `${i.brand} ${i.model} ${i.id}`.toLowerCase().includes(query.toLowerCase())
-      );
-      renderAdvListings(filtered);
+      state.listings = state.listings.filter(i => i.id !== id);
+      renderAdvListings(); renderListings();
+      showToast("Anúncio removido.");
     }
 
     /* ===================================================================
-       7. ADMIN MODERATION
+       6. ADMIN DASHBOARD
        =================================================================== */
-
+    
     function renderAdminPending() {
       const container = document.getElementById('admin-pending-container');
       container.innerHTML = `
         <div class="p-2 bg-amber-50 border border-amber-200 rounded-xl flex justify-between items-center text-xs">
           <div>
-            <span class="font-bold text-slate-800 block">FIAT TORO 2021 (Salvado)</span>
-            <span class="text-[10px] text-slate-500">Por: Auto Peças Curitiba • FIPE OK</span>
+            <span class="font-bold text-slate-800 block">FIAT TORO 2021</span>
+            <span class="text-[10px] text-slate-500">Aguardando aprovação</span>
           </div>
           <div class="flex gap-1">
-            <button onclick="approveAdminItem(this)" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[10px]">Aprovar</button>
-            <button onclick="rejectAdminItem(this)" class="bg-red-600 text-white font-bold px-2 py-1 rounded-lg text-[10px]">Recusar</button>
+            <button onclick="this.closest('div').parentElement.remove(); showToast('Aprovado!')" class="bg-green-600 text-white font-bold px-2 py-1 rounded-lg text-[10px]">Aprovar</button>
+            <button onclick="this.closest('div').parentElement.remove(); showToast('Recusado.')" class="bg-red-600 text-white font-bold px-2 py-1 rounded-lg text-[10px]">Recusar</button>
           </div>
         </div>
       `;
     }
 
-    function approveAdminItem(btn) {
-      btn.closest('div').parentElement.remove();
-      showToast("Anúncio APROVADO e publicado no feed!");
-    }
-
-    function rejectAdminItem(btn) {
-      btn.closest('div').parentElement.remove();
-      showToast("Anúncio RECUSADO pelo Administrador.");
-    }
-
     /* ===================================================================
-       8. MODALS & HANDLERS
+       7. CORE INTERACTIONS & MODALS
        =================================================================== */
+    
+    // Voice Search
+    function toggleVoiceSearch() {
+      const btn = document.getElementById('voice-search-btn');
+      const input = document.getElementById('client-search-input');
 
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        btn.classList.add('recording-active');
+        setTimeout(() => {
+          input.value = "Peugeot 308"; filterListings();
+          btn.classList.remove('recording-active');
+          showToast("Voz reconhecida: 'Peugeot 308'");
+        }, 1500);
+        return;
+      }
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'pt-BR';
+      btn.classList.add('recording-active');
+      recognition.start();
+      recognition.onresult = (e) => { input.value = e.results[0][0].transcript; filterListings(); };
+      recognition.onend = () => btn.classList.remove('recording-active');
+    }
+
+    // Wish Modal (Ache Para Mim)
     function openWishModal() { document.getElementById('modal-wish').classList.remove('hidden'); }
     function closeWishModal() { document.getElementById('modal-wish').classList.add('hidden'); }
-
+    
     function handleWishSubmit(e) {
       e.preventDefault();
-      const vehicle = document.getElementById('wish-vehicle').value;
-      const parts = document.getElementById('wish-parts').value;
-      const name = document.getElementById('wish-name').value;
-      const phone = document.getElementById('wish-phone').value;
-
-      const newWish = {
-        id: `WISH-${Date.now().toString().slice(-3)}`,
+      const newLead = {
+        id: `LEAD-${Date.now().toString().slice(-3)}`,
         date: "Hoje",
-        vehicle: vehicle.toUpperCase(),
-        parts: parts,
-        clientName: name,
-        phone: phone,
-        status: "Pendente"
+        vehicle: document.getElementById('wish-vehicle').value,
+        part: document.getElementById('wish-parts').value,
+        clientName: document.getElementById('wish-name').value,
+        phone: document.getElementById('wish-phone').value,
+        status: "available",
+        price: 5.00
       };
-
-      clientWishes.unshift(newWish);
-      renderWishes();
+      state.leads.unshift(newLead);
+      renderLeads();
       closeWishModal();
       document.getElementById('wish-form').reset();
-      showToast("🎉 Pedido disparado com sucesso para todos os ferros velhos!");
+      showToast("🎉 Pedido disparado para os desmontes compatíveis!");
     }
 
+    // Lead Purchase (Advertiser)
+    let currentLeadId = null;
+    function openLeadModal(id) {
+      currentLeadId = id;
+      document.getElementById('modal-lead').classList.remove('hidden');
+    }
+    function closeLeadModal() { document.getElementById('modal-lead').classList.add('hidden'); }
+    
+    function confirmLeadPurchase() {
+      const lead = state.leads.find(l => l.id === currentLeadId);
+      if (lead) {
+        lead.status = 'purchased';
+        renderLeads();
+        closeLeadModal();
+        showToast(`✅ Lead comprado! Contato: ${lead.clientName} - ${lead.phone}`);
+      }
+    }
+
+    // Detail Modal
     function openDetailModal(id) {
-      selectedListingForDetail = listings.find(i => i.id === id);
-      if (!selectedListingForDetail) return;
-
-      document.getElementById('detail-code').textContent = `#${selectedListingForDetail.id}`;
-      document.getElementById('detail-title').textContent = `${selectedListingForDetail.brand.toUpperCase()} ${selectedListingForDetail.model.toUpperCase()} - ${selectedListingForDetail.year}`;
-      document.getElementById('detail-brand').textContent = selectedListingForDetail.brand;
-      document.getElementById('detail-model').textContent = selectedListingForDetail.model;
-      document.getElementById('detail-year').textContent = selectedListingForDetail.year;
-      document.getElementById('detail-img').src = selectedListingForDetail.image;
-
+      const item = state.listings.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('detail-code').textContent = `#${item.id}`;
+      document.getElementById('detail-title').textContent = `${item.brand.toUpperCase()} ${item.model.toUpperCase()} - ${item.year}`;
+      document.getElementById('detail-brand').textContent = item.brand;
+      document.getElementById('detail-model').textContent = item.model;
+      document.getElementById('detail-year').textContent = item.year;
+      document.getElementById('detail-img').src = item.image;
       document.getElementById('modal-detail').classList.remove('hidden');
     }
-
     function closeDetailModal() { document.getElementById('modal-detail').classList.add('hidden'); }
-    function showZoneInfo(zoneName, details) {
-      document.getElementById('zone-description').innerHTML = `<b class="text-slate-800">${zoneName}:</b> ${details}`;
+    function showZoneInfo(zone, desc) { document.getElementById('zone-description').innerHTML = `<b>${zone}:</b> ${desc}`; }
+    function contactWhatsApp() {
+      showToast("Redirecionando para o WhatsApp do vendedor...");
+      setTimeout(() => { closeDetailModal(); }, 1500);
     }
 
-    function openCreateListingModal() {
-      document.getElementById('modal-create').classList.remove('hidden');
-      switchCreateMode('fipe'); // Padrão abre no modo FIPE
-    }
+    // Create Listing Modal
+    function openCreateListingModal() { document.getElementById('modal-create').classList.remove('hidden'); }
     function closeCreateListingModal() { document.getElementById('modal-create').classList.add('hidden'); }
-
-    // Alternar entre modo FIPE e Manual no cadastro
+    
     function switchCreateMode(mode) {
-      createMode = mode;
-      const btnFipe = document.getElementById('btn-fipe-mode');
-      const btnManual = document.getElementById('btn-manual-mode');
-      const fieldsFipe = document.getElementById('create-fipe-fields');
-      const fieldsManual = document.getElementById('create-manual-fields');
-
-      if (mode === 'fipe') {
-        btnFipe.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm';
-        btnManual.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600';
-        fieldsFipe.classList.remove('hidden');
-        fieldsManual.classList.add('hidden');
-      } else {
-        btnFipe.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600';
-        btnManual.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm';
-        fieldsFipe.classList.add('hidden');
-        fieldsManual.classList.remove('hidden');
-      }
+      state.createMode = mode;
+      document.getElementById('btn-fipe-mode').className = mode === 'fipe' ? 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm' : 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600';
+      document.getElementById('btn-manual-mode').className = mode === 'manual' ? 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm' : 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600';
+      document.getElementById('create-fipe-fields').classList.toggle('hidden', mode !== 'fipe');
+      document.getElementById('create-manual-fields').classList.toggle('hidden', mode !== 'manual');
     }
 
     function handleCreateListingSubmit(e) {
       e.preventDefault();
-      
       let brand, model, year, line, image;
 
-      if (createMode === 'fipe') {
+      if (state.createMode === 'fipe') {
         const preview = document.getElementById('create-fipe-preview');
-        if (!preview.dataset.fipeBrand) {
-          showToast("⚠️ Selecione um veículo completo na FIPE para continuar.");
-          return;
-        }
+        if (!preview.dataset.fipeBrand) { showToast("⚠️ Selecione um veículo FIPE."); return; }
         brand = preview.dataset.fipeBrand;
         model = preview.dataset.fipeModel;
         year = preview.dataset.fipeYear;
-        line = 'passeio'; // Padrão para veículos FIPE
-        image = document.getElementById('new-img').value || "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80";
+        line = 'passeio';
       } else {
-        // Modo Manual
         brand = document.getElementById('manual-brand').value;
         model = document.getElementById('manual-model').value;
         year = document.getElementById('manual-year').value;
         line = document.getElementById('manual-line').value;
-        image = document.getElementById('new-img').value || "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80";
-
-        if (!brand || !model || !year) {
-          showToast("⚠️ Preencha os campos obrigatórios do cadastro manual.");
-          return;
-        }
+        if (!brand || !model || !year) { showToast("⚠️ Preencha os campos."); return; }
       }
 
       const newListing = {
         id: Math.floor(10000000 + Math.random() * 90000000).toString(),
-        brand: brand,
-        model: model,
-        year: year,
-        line: line,
+        brand, model, year, line,
         location: document.getElementById('new-location').value,
-        image: image,
+        image: document.getElementById('new-img').value || "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80",
         status: "Ativo",
         advertiser: "J'Store Auto Peças",
-        desc: document.getElementById('new-desc').value || "Veículo para desmonte e reaproveitamento de peças."
+        desc: document.getElementById('new-desc').value || "Veículo para desmonte."
       };
 
-      listings.unshift(newListing);
-      renderAdvListings();
-      renderListings();
+      state.listings.unshift(newListing);
+      renderAdvListings(); renderListings();
       closeCreateListingModal();
       document.getElementById('create-form').reset();
-      document.getElementById('create-fipe-preview').classList.add('hidden');
-      showToast("✅ Anúncio cadastrado e publicado!");
+      showToast("✅ Anúncio publicado com sucesso!");
     }
 
-    function contactWhatsApp() {
-      const msg = encodeURIComponent(`Olá! Vi o anúncio #${selectedListingForDetail.id} (${selectedListingForDetail.brand} ${selectedListingForDetail.model}) no app Sucata Brasil e gostaria de cotação de peças.`);
-      window.open(`https://wa.me/5547999998888?text=${msg}`, '_blank');
+    // Order Tracking Simulation
+    function openOrderTracking(orderId) {
+      const order = state.orders.find(o => o.id === orderId);
+      if (!order) return;
+      state.activeOrder = order;
+      document.getElementById('track-order-id').textContent = order.id;
+      document.getElementById('track-status-text').textContent = order.status.toUpperCase();
+      document.getElementById('track-total').textContent = `R$ ${order.total.toFixed(2)}`;
+      
+      // Reset Steps
+      ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'].forEach((s, i) => {
+        document.getElementById(s).className = 'status-step' + (i === 0 ? ' active' : '');
+      });
+
+      document.getElementById('btn-pay-order').classList.remove('hidden');
+      document.getElementById('modal-order-tracking').classList.remove('hidden');
     }
 
-    function respondWish(phone, vehicle) {
-      const msg = encodeURIComponent(`Olá! Vi o seu pedido no Sucata Brasil para o veículo ${vehicle}. Tenho as peças em estoque aqui na nossa loja!`);
-      window.open(`https://wa.me/55${phone}?text=${msg}`, '_blank');
+    function closeOrderTracking() { document.getElementById('modal-order-tracking').classList.add('hidden'); }
+
+    function simulatePayment() {
+      const btn = document.getElementById('btn-pay-order');
+      btn.innerHTML = '<span class="loader"></span> Processando pagamento...';
+      btn.disabled = true;
+
+      setTimeout(() => {
+        // Update State
+        state.activeOrder.status = 'paid';
+        
+        // Update UI
+        document.getElementById('track-status-text').textContent = 'PAGAMENTO APROVADO';
+        document.getElementById('step-1').className = 'status-step completed';
+        document.getElementById('step-2').className = 'status-step active';
+        document.getElementById('step-3').className = 'status-step active'; // Simulating immediate preparation
+        
+        btn.classList.add('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '💳 SIMULAR PAGAMENTO SEGURO';
+
+        showToast("💰 Pagamento aprovado! Valor retido em custódia.");
+        
+        // Simulate automatic progression
+        setTimeout(() => {
+          document.getElementById('step-3').className = 'status-step completed';
+          document.getElementById('step-4').className = 'status-step active';
+          document.getElementById('track-status-text').textContent = 'ENVIADO';
+          showToast("📦 Peça enviada pela sucata!");
+          
+          setTimeout(() => {
+            document.getElementById('step-4').className = 'status-step completed';
+            document.getElementById('step-5').className = 'status-step active';
+            document.getElementById('track-status-text').textContent = 'ENTREGUE';
+            showToast("✅ Peça entregue! Repasse liberado para o vendedor.");
+          }, 4000);
+        }, 4000);
+
+      }, 2000);
     }
 
     /* ===================================================================
-       9. TOAST NOTIFICATION SYSTEM
+       8. TOAST SYSTEM
        =================================================================== */
-
-    function showToast(message) {
-      const toast = document.getElementById('toast-container');
-      document.getElementById('toast-message').textContent = message;
-      toast.classList.remove('hidden');
-      setTimeout(() => { toast.classList.add('hidden'); }, 3500);
+    function showToast(msg) {
+      const t = document.getElementById('toast-container');
+      document.getElementById('toast-message').textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 4000);
     }
-
     function hideToast() { document.getElementById('toast-container').classList.add('hidden'); }
   </script>
-
 </body>
 </html>
